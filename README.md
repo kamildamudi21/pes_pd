@@ -1,8 +1,11 @@
-# Physical Design using OpenLANE/Sky130 
+# Physical Design using OpenLANE/Sky130 Tool
 
-## OpenLANE Design Stages
+## OpenLANE
 
-OpenLANE flow consists of several stages. By default all flow steps are run in sequence. Each stage may consist of multiple sub-stages. OpenLANE can also be run interactively.
+
+OpenLANE offers two distinct modes of operation: an Automated Flow and an Interactive Mode.
+
+In the Automated Flow, all the essential steps of the chip design process are executed sequentially, ensuring a streamlined and automated progression from RTL synthesis to GDSII generation. Each stage within this flow consists of multiple sub-stages, with each step serving a specific purpose:
 
 1. *Synthesis*
     1. `yosys` - Performs RTL synthesis
@@ -34,16 +37,16 @@ OpenLANE flow consists of several stages. By default all flow steps are run in s
     3. `Netgen` - Performs LVS Checks
     4. `CVC` - Performs Circuit Validity Checks
 
-OpenLANE can be operated at 2 different modes ie., Automated flow and Interactive mode.
+On the other hand, OpenLANE's Interactive Mode provides designers with a more flexible and hands-on approach to the chip design process. It allows for manual intervention and customization at various stages of the flow, empowering users to make real-time adjustments and optimizations as needed to meet specific design requirements.
 
-## To enter the automated flow, use these commands
+## The automated flow, use these commands
 ```
 cd OpenLane
 make mount
 ./ flow.tcl -design openlane/<DESIGN_NAME>  -tag <TAG>
 ```
 
-## To enter the Interactive mode, use these commands 
+## The Interactive mode, use these commands 
 ```
 cd OpenLane
 make mount
@@ -71,7 +74,7 @@ run_antenna_check
 # Labs
 
 <details>
-<summary>DAY 1 : Inception of opensource-EDA, Openlane and Skywater130</summary>
+<summary>DAY 1 : opensource-EDA, Openlane and Skywater130</summary>
 <br>
 
 ## Skywater-130 PDK
@@ -148,16 +151,18 @@ Cell design is done in 3 parts:
 
 ### Standard cell Charachterization Flow
 
-Standard Cell Libraries consist of cells with different functionality/drive strengths. These cells need to be characterized by liberty files to be used by synthesis tools to determine optimal circuit arrangement. The open-source software GUNA is used for characterization.
-Characterization is a well-defined flow consisting of the following steps:
+Standard Cell Libraries encompass diverse cells featuring varying functionality and drive strengths. These cells must undergo characterization through liberty files to enable synthesis tools to establish the most advantageous circuit configuration. The open-source software GUNA serves as the means for conducting this characterization process.
 
-- Link Model File of CMOS containing property definitions
-- Specify process corner(s) for the cell to be characterized
-- Specify cell delay and slew thresholds percentages
-- Specify timing and power tables
-- Read the parasitic extracted netlist
-- Apply input or stimulus
-- Provide necessary simulation commands
+Characterization follows a clearly defined sequence involving the following stages:
+
+-Incorporate the Model File for CMOS, which contains property definitions.
+-Define the process corner(s) to characterize the target cell.
+-Set the threshold percentages for cell delay and slew.
+-Specify tables for timing and power characteristics.
+-Read the netlist with parasitic extraction results.
+-Apply input signals or stimuli as required.
+-Execute the necessary simulation commands.
+
 
 ### General Timing characterization parameters
 
@@ -267,11 +272,14 @@ Since the layout is perfect, we can generate the lef file
 
 since there is slack, we have to reduce it
 
-VLSI engineers will obtain system specifications in the architecture design phase. These specifications will determine a required frequency of operation. To analyze a circuit's timing performance designers will use static timing analysis tools (STA). When referring to pre clock tree synthesis STA analysis we are mainly concerned with setup timing in regards to a launch clock. STA will report problems such as worst negative slack (WNS) and total negative slack (TNS). These refer to the worst path delay and total path delay in regards to our setup timing restraint. Fixing slack violations can be debugged through performing STA analysis with OpenSTA, which is integrated in the OpenLANE tool. To describe these constraints to tools such as In order to ensure correct operation of these tools two steps must be taken:
+During the architectural design phase, VLSI engineers will acquire system specifications, which will establish the required operating frequency. To assess a circuit's timing performance, designers will employ static timing analysis tools (STA). When discussing pre-clock tree synthesis STA analysis, our primary focus lies in setup timing concerning the launch clock. STA will identify issues like the worst negative slack (WNS) and total negative slack (TNS), which pertain to the most critical and overall path delays within our setup timing constraint.
 
-- Design configuration files (.conf) - Tool configuration files for the specified design
-- Design Synopsys design constraint (.sdc) files - Industry standard constraints file
+To address and rectify slack violations, STA analysis can be executed using OpenSTA, an integral component of the OpenLANE toolchain. To effectively communicate these constraints to tools and ensure their proper operation, two essential steps must be undertaken:
 
+- Create design configuration files (.conf) - These files contain tool configuration settings specific to the designated design.
+
+- Develop Synopsys design constraint (.sdc) files - These files adhere to industry standards and provide comprehensive constraints for the design, ensuring its accurate operation.
+  
 For the design to be complete, the worst negative slack needs to be above or equal to 0. If the slack is outside of this range we can do one of multiple things:
 
 1. Review our synthesis strategy in OpenLANE
