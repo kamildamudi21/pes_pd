@@ -194,8 +194,20 @@ magic -T sky130A.tech sky130_inv.mag
 
 ## Exploring the Layout displayed by MAGIC
 
+![layout1](https://github.com/kamildamudi21/pes_pd/assets/141449459/729be7eb-11db-4e95-abb1-5e2556981de5)
+
 
 ## Modified Spice netlist
+![2spice](https://github.com/kamildamudi21/pes_pd/assets/141449459/494bbefb-7feb-484f-a780-51018685f96c)
+![3](https://github.com/kamildamudi21/pes_pd/assets/141449459/9ccfa87b-64ab-4ee2-a861-6785a7b9b9f0)
+![4](https://github.com/kamildamudi21/pes_pd/assets/141449459/f9f770d4-958e-44a1-950f-8d03c34f2408)
+
+
+The results obtained from the graph are :
+- Rise Transition : 0.0395ns
+- Fall transition : 0.0282ns
+- Cell Rise delay : 0.03598ns
+- Cell fall delay : 0.0483ns
 
 
 </details>
@@ -205,23 +217,97 @@ magic -T sky130A.tech sky130_inv.mag
 <summary>DAY 4 : Pre-Layout timing analysis and importance of good clock tree</summary>
 <br>
     
-## Extraction of LEF
+## Extraction of LEF 
 
 
+Track info can be found at :
+
+``` ~/Desktop/work/tools/openlane_working_dir/pdks/sky130A/libs.tech/openlane/sky130fd_sc_hd/tracks.info```
+
+
+![1](https://github.com/kamildamudi21/pes_pd/assets/141449459/c647cfe0-f55a-44c7-b7c9-9954fab64201)
+
+
+- 1st value indicates the offset and 2nd value indicates the pitch along provided direction
 
 ### Setting grid values using above file info
 
+![2](https://github.com/kamildamudi21/pes_pd/assets/141449459/572e9ec0-1eba-49f9-8c40-7a7c47aaa905)
 
+
+
+- From the above pic, its confirmed that the pins A and Y are at the intersection of X and Y tracks. So the first condition is met.
+- The PR boundary is taking 3 grids on width and 9 grids on height which says that the 2nd condition is also met
 
 ## LEF Generation
 
+Since the layout is perfect, we can generate the lef file
 
+#### 1. save the modified layout (with new grid)
+   - In console, type ```save sky130_vsdinv.mag```
+   - This saves the modified layout in current working directory
+
+#### 2. Open the file and extract LEF
+   - Open using ``` magic -T sky130A.tch sky130_vsdinv.mag```
+   - in the console opened, type ```lef write``` and a lef file will be generated
+
+![3](https://github.com/kamildamudi21/pes_pd/assets/141449459/0854237e-9670-41e3-86e8-ddaaba5f390d)
+
+
+#### 4. Make sure the lef file is added
+
+- Include the below command to include the additional lef into the flow:
+      
+          set lefs [glob $::env(DESIGN_DIR)/src/*.lef]
+        
+          add_lefs -src $lefs
+
+![4](https://github.com/kamildamudi21/pes_pd/assets/141449459/1830ce59-7252-483c-bc4f-31c280f67143)
+
+
+since there is slack, we have to reduce it
+
+VLSI engineers will obtain system specifications in the architecture design phase. These specifications will determine a required frequency of operation. To analyze a circuit's timing performance designers will use static timing analysis tools (STA). When referring to pre clock tree synthesis STA analysis we are mainly concerned with setup timing in regards to a launch clock. STA will report problems such as worst negative slack (WNS) and total negative slack (TNS). These refer to the worst path delay and total path delay in regards to our setup timing restraint. Fixing slack violations can be debugged through performing STA analysis with OpenSTA, which is integrated in the OpenLANE tool. To describe these constraints to tools such as In order to ensure correct operation of these tools two steps must be taken:
+
+- Design configuration files (.conf) - Tool configuration files for the specified design
+- Design Synopsys design constraint (.sdc) files - Industry standard constraints file
+
+For the design to be complete, the worst negative slack needs to be above or equal to 0. If the slack is outside of this range we can do one of multiple things:
+
+1. Review our synthesis strategy in OpenLANE
+    - Enalbed CELL_SIZING
+    - Enabled SYNTH_STRATEGY with parameter as "DELAY 1"
+    - The synthesis result is :
+      
+![5](https://github.com/kamildamudi21/pes_pd/assets/141449459/68dcce2f-e9d3-4fc2-b455-6fd0f1a8f0f2)
+![6](https://github.com/kamildamudi21/pes_pd/assets/141449459/7fa4024f-b1c7-46b1-93d8-23edb986ff98)
+
+
+
+
+
+    The delay is high when the fanout is high. Therefore we can re-run synthesis by changing the value of ```SYNTH_MAX_FANOUT``` variable
+    
+2. Enable cell buffering 
+3. Perform manual cell replacement on our WNS path with the OpenSTA tool
+
+    - We can see which net is driving most outputs and replace the driver cell with larger form of its own kind
+
+ 
+![7](https://github.com/kamildamudi21/pes_pd/assets/141449459/c5e6dc7f-6b72-4fa1-95c7-ead8dc58c05d)
+
+
+4. Optimize the fanout value with OpenLANE tool
+
+Since we have synthesised the core using our vsdinv cell too and as it got successfully synthesized, it should be visible in layout after ```run_placement``` stage which is followed after ```run_floorplan``` stage
+![8](https://github.com/kamildamudi21/pes_pd/assets/141449459/8b5d0738-3331-441a-8a90-a6e4e7126454)
 
 </details>
 
 <details>
 <summary>DAY 5 : Final steps for RTL2GDSII</summary>
 <br>
+
 
 ## Power Distribution Network
 
@@ -234,7 +320,7 @@ The PDN feature within OpenLANE will create:
 - Power straps to bring power into the center of the chip
 - Power rails for the standard cells
 
-
+![1](https://github.com/kamildamudi21/pes_pd/assets/141449459/5ab085ae-8e65-437c-9af9-dd37ad913403)
 
 
 Note: The pitch of the metal 1 power rails defines the height of the standard cells
@@ -261,6 +347,8 @@ python3 main.py <path to merged.lef in tmp> <path to def in routing>
 ```
 
 The SPEF File will be generated in the location where def file is present
+
+
 
 
 
